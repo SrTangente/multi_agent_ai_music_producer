@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-agent-music-producer"
+version = "0.1.0"
+description = "A LangGraph-orchestrated system that generates music segment-by-segment using specialized AI agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "AI Music Producer Team"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "langgraph>=0.2.0,<0.3.0",
+    "langchain-core>=0.3.0,<0.4.0",
+    "langchain-anthropic>=0.2.0,<0.3.0",
+    "audiocraft>=1.3.0,<2.0.0",
+    "librosa>=0.10.0,<0.11.0",
+    "pydantic>=2.0.0,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+    "numpy>=1.24.0,<2.0.0",
+    "torch>=2.0.0",
+    "soundfile>=0.12.0,<0.13.0",
+    "pyyaml>=6.0.0,<7.0.0",
+]
+
+[project.optional-dependencies]
+openai = ["langchain-openai>=0.2.0,<0.3.0", "openai>=1.30.0,<2.0.0"]
+huggingface = ["transformers>=4.40.0,<5.0.0", "accelerate>=0.30.0"]
+ollama = ["ollama>=0.3.0,<0.4.0"]
+all-providers = [
+    "langchain-openai>=0.2.0,<0.3.0",
+    "openai>=1.30.0,<2.0.0",
+    "transformers>=4.40.0,<5.0.0",
+    "accelerate>=0.30.0",
+    "ollama>=0.3.0,<0.4.0",
+]
+dev = [
+    "pytest>=8.0.0,<9.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.5.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+music-producer = "src.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "requires_gpu: marks tests that require GPU",
+    "requires_llm: marks tests that require real LLM calls",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

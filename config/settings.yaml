@@ -1,101 +1,45 @@
 # Multi-Agent AI Music Producer Configuration
 
-app:
-  name: "Multi-Agent AI Music Producer"
-  version: "0.1.0"
-  debug: false
-  log_level: "INFO"
+llm:
+  # Provider: anthropic | openai | huggingface | ollama
+  provider: "anthropic"
+  model: "claude-sonnet-4-6"
+  temperature: 0.7
+  max_tokens: 4096
+  # For ollama or custom endpoints
+  base_url: null
 
-# Default music parameters
-music:
-  default_tempo: 120
-  default_key: "C"
-  default_scale: "major"
-  default_time_signature: "4/4"
-  default_duration_bars: 16
+generation:
+  max_retries: 3
+  conditioning_tail_seconds: 5.0
+  default_segment_duration: 15.0
+  # MusicGen parameters
+  musicgen_model: "facebook/musicgen-melody"
+  temperature: 1.0
+  top_k: 250
+  cfg_coef: 3.0
+  # Escalating constraints on retries
+  retry_temperature_decay: 0.2  # Reduce temp by this on each retry
+  retry_cfg_increase: 1.0       # Increase cfg_coef by this on each retry
 
-# Agent configurations
-agents:
-  orchestrator:
-    model: "gpt-4"
-    temperature: 0.7
-    max_tokens: 4096
-    
-  composer:
-    model: "gpt-4"
-    temperature: 0.8
-    max_tokens: 2048
-    specialties:
-      - "melody"
-      - "harmony"
-      - "chord_progressions"
-    
-  arranger:
-    model: "gpt-4"
-    temperature: 0.6
-    max_tokens: 2048
-    specialties:
-      - "song_structure"
-      - "dynamics"
-      - "instrumentation"
-    
-  producer:
-    model: "gpt-4"
-    temperature: 0.5
-    max_tokens: 2048
-    specialties:
-      - "mixing"
-      - "sound_design"
-      - "effects"
-    
-  drummer:
-    model: "gpt-4"
-    temperature: 0.7
-    max_tokens: 1024
-    specialties:
-      - "rhythm_patterns"
-      - "fills"
-      - "groove"
-    
-  bassist:
-    model: "gpt-4"
-    temperature: 0.6
-    max_tokens: 1024
-    specialties:
-      - "bass_lines"
-      - "root_movement"
-      - "groove"
+audio:
+  sample_rate: 32000
+  output_format: "wav"
+  crossfade_duration_ms: 500
+  fade_in_duration_ms: 1000
+  fade_out_duration_ms: 2000
+  target_lufs: -14.0
 
-# Genre presets
-genres:
-  electronic:
-    tempo_range: [110, 140]
-    common_keys: ["Am", "Cm", "Dm"]
-    instruments: ["synth", "drums", "bass"]
-    
-  jazz:
-    tempo_range: [80, 180]
-    common_keys: ["Bb", "Eb", "F"]
-    instruments: ["piano", "bass", "drums", "sax"]
-    
-  classical:
-    tempo_range: [60, 160]
-    common_keys: ["C", "G", "D", "Am"]
-    instruments: ["strings", "piano", "woodwinds"]
-    
-  pop:
-    tempo_range: [90, 130]
-    common_keys: ["C", "G", "Am", "Em"]
-    instruments: ["guitar", "bass", "drums", "synth"]
+logging:
+  # Level: MINIMAL | STANDARD | VERBOSE | DEBUG
+  level: "STANDARD"
+  output_dir: "output/runs"
 
-# Output configuration
-output:
-  directory: "./output"
-  formats:
-    - "midi"
-  midi_ticks_per_beat: 480
-
-# API endpoints (for future web interface)
-api:
-  host: "localhost"
-  port: 8000
+continuity:
+  # How many seconds of the previous segment to use for conditioning
+  tail_seconds: 5.0
+  # Weights for selecting best reference track
+  bpm_weight: 0.3
+  key_weight: 0.3
+  energy_weight: 0.2
+  mood_weight: 0.2
