@@ -1,0 +1,101 @@
+# Multi-Agent AI Music Producer Configuration
+
+app:
+  name: "Multi-Agent AI Music Producer"
+  version: "0.1.0"
+  debug: false
+  log_level: "INFO"
+
+# Default music parameters
+music:
+  default_tempo: 120
+  default_key: "C"
+  default_scale: "major"
+  default_time_signature: "4/4"
+  default_duration_bars: 16
+
+# Agent configurations
+agents:
+  orchestrator:
+    model: "gpt-4"
+    temperature: 0.7
+    max_tokens: 4096
+    
+  composer:
+    model: "gpt-4"
+    temperature: 0.8
+    max_tokens: 2048
+    specialties:
+      - "melody"
+      - "harmony"
+      - "chord_progressions"
+    
+  arranger:
+    model: "gpt-4"
+    temperature: 0.6
+    max_tokens: 2048
+    specialties:
+      - "song_structure"
+      - "dynamics"
+      - "instrumentation"
+    
+  producer:
+    model: "gpt-4"
+    temperature: 0.5
+    max_tokens: 2048
+    specialties:
+      - "mixing"
+      - "sound_design"
+      - "effects"
+    
+  drummer:
+    model: "gpt-4"
+    temperature: 0.7
+    max_tokens: 1024
+    specialties:
+      - "rhythm_patterns"
+      - "fills"
+      - "groove"
+    
+  bassist:
+    model: "gpt-4"
+    temperature: 0.6
+    max_tokens: 1024
+    specialties:
+      - "bass_lines"
+      - "root_movement"
+      - "groove"
+
+# Genre presets
+genres:
+  electronic:
+    tempo_range: [110, 140]
+    common_keys: ["Am", "Cm", "Dm"]
+    instruments: ["synth", "drums", "bass"]
+    
+  jazz:
+    tempo_range: [80, 180]
+    common_keys: ["Bb", "Eb", "F"]
+    instruments: ["piano", "bass", "drums", "sax"]
+    
+  classical:
+    tempo_range: [60, 160]
+    common_keys: ["C", "G", "D", "Am"]
+    instruments: ["strings", "piano", "woodwinds"]
+    
+  pop:
+    tempo_range: [90, 130]
+    common_keys: ["C", "G", "Am", "Em"]
+    instruments: ["guitar", "bass", "drums", "synth"]
+
+# Output configuration
+output:
+  directory: "./output"
+  formats:
+    - "midi"
+  midi_ticks_per_beat: 480
+
+# API endpoints (for future web interface)
+api:
+  host: "localhost"
+  port: 8000
