@@ -198,7 +198,7 @@ def sample_initial_state(temp_dir: Path) -> dict[str, Any]:
     return create_initial_state(
         user_prompt="ambient electronic music with synths",
         reference_paths=[],
-        target_duration_sec=60.0,
+        output_dir=str(temp_dir),
     )
 
 
@@ -258,10 +258,10 @@ def mock_logger(temp_dir: Path):
     from src.logging.logger import LogLevel, MusicProducerLogger
     
     return MusicProducerLogger(
-        log_dir=str(temp_dir),
+        run_id="test_run",
+        output_dir=str(temp_dir),
         level=LogLevel.DEBUG,
-        enable_json=True,
-        enable_console=False,
+        console_output=False,
     )
 
 
@@ -292,6 +292,15 @@ def pytest_configure(config):
     )
 
 
+def _has_gpu() -> bool:
+    """Check if GPU is available."""
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except ImportError:
+        return False
+
+
 # Skip markers
 slow = pytest.mark.slow
 integration = pytest.mark.integration
@@ -303,12 +312,3 @@ requires_api = pytest.mark.skipif(
     not os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY") == "test-api-key",
     reason="Test requires real API key"
 )
-
-
-def _has_gpu() -> bool:
-    """Check if GPU is available."""
-    try:
-        import torch
-        return torch.cuda.is_available()
-    except ImportError:
-        return False

@@ -44,12 +44,14 @@ class GenerationConfig(BaseModel):
     cfg_coef: float = Field(default=3.0, ge=1.0, le=10.0)
     retry_temperature_decay: float = Field(default=0.2, ge=0.0, le=0.5)
     retry_cfg_increase: float = Field(default=1.0, ge=0.0, le=3.0)
+    approval_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
 
 
 class AudioConfig(BaseModel):
     """Audio processing configuration."""
     sample_rate: int = Field(default=32000, ge=16000, le=48000)
     output_format: Literal["wav", "mp3", "flac"] = "wav"
+    output_dir: str = Field(default="output")
     crossfade_duration_ms: int = Field(default=500, ge=0, le=5000)
     fade_in_duration_ms: int = Field(default=1000, ge=0, le=10000)
     fade_out_duration_ms: int = Field(default=2000, ge=0, le=10000)

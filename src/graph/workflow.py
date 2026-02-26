@@ -218,8 +218,10 @@ class MusicProducerGraph:
         initial_state = create_initial_state(
             user_prompt=user_prompt,
             reference_paths=reference_paths or [],
-            target_duration_sec=target_duration_sec,
+            output_dir=self.settings.audio.output_dir if self.settings else "output",
         )
+        # Store target duration in state
+        initial_state["target_duration_sec"] = target_duration_sec
         
         # Stream execution
         for event in compiled.stream(initial_state, config=config):
@@ -254,8 +256,10 @@ class MusicProducerGraph:
         initial_state = create_initial_state(
             user_prompt=user_prompt,
             reference_paths=reference_paths or [],
-            target_duration_sec=target_duration_sec,
+            output_dir=self.settings.audio.output_dir if self.settings else "output",
         )
+        # Store target duration in state
+        initial_state["target_duration_sec"] = target_duration_sec
         
         # Run to completion
         final_state = compiled.invoke(initial_state, config=config)

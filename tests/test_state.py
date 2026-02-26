@@ -150,78 +150,93 @@ class TestToolResult:
 class TestReducers:
     """Tests for state reducer functions."""
     
-    def test_create_initial_state(self):
+    def test_create_initial_state(self, temp_dir):
         """Test initial state creation."""
         from src.state.reducers import create_initial_state
         
         state = create_initial_state(
             user_prompt="test prompt",
             reference_paths=["ref1.wav", "ref2.wav"],
-            target_duration_sec=120.0,
+            output_dir=str(temp_dir),
         )
         
         assert state["user_prompt"] == "test prompt"
         assert len(state["reference_paths"]) == 2
-        assert state["target_duration_sec"] == 120.0
-        assert state["status"] == "initialized"
+        assert state["phase"] == "initialized"
+        assert state["run_id"] is not None
     
     def test_create_segment_state(self):
         """Test segment state creation."""
         from src.state.reducers import create_segment_state
         
         segment = create_segment_state(
-            segment_index=1,
-            attempt_number=2,
+            segment_id="seg_001",
+            parameters={"segment_index": 1, "duration_sec": 15.0},
         )
         
-        assert segment["segment_index"] == 1
-        assert segment["attempt_number"] == 2
+        assert segment["segment_id"] == "seg_001"
+        assert segment["parameters"]["segment_index"] == 1
         assert segment["status"] == "pending"
+        assert segment["attempts"] == []
     
     def test_select_best_attempt(self):
         """Test selecting best attempt from history."""
-        from src.state.reducers import select_best_attempt
-        from src.state.schemas import CriticFeedback
+        from src.state.reducers import select_best_attempt, create_segment_state
+        from datetime import datetime
         
-        # Create attempt history
-        history = [
+        # Create segment state with attempts
+        segment = create_segment_state(
+            segment_id="seg_001",
+            parameters={"segment_index": 0, "duration_sec": 15.0},
+        )
+        
+        # Add attempts with critic_feedback containing overall_score
+        segment["attempts"] = [
             {
-                "segment_index": 0,
                 "attempt_number": 1,
                 "audio_path": "/path/attempt_1.wav",
-                "feedback": CriticFeedback(
-                    approved=False,
-                    consistency_score=0.5,
-                    quality_score=0.5,
-                    energy_score=0.5,
-                    continuity_score=0.5,
-                    issues=[],
-                    revision_suggestions=[],
-                    notes="",
-                ),
+                "timestamp": datetime.now().isoformat(),
+                "generation_params": {},
+                "critic_feedback": {
+                    "approved": False,
+                    "overall_score": 0.5,
+                    "prompt_alignment": 0.5,
+                    "director_compliance": 0.5,
+                    "continuity_score": 0.5,
+                    "technical_quality": 0.5,
+                    "issues": [],
+                    "suggestions": [],
+                    "better_than_previous": False,
+                    "evaluation_timestamp": datetime.now().isoformat(),
+                },
+                "approved": False,
             },
             {
-                "segment_index": 0,
                 "attempt_number": 2,
                 "audio_path": "/path/attempt_2.wav",
-                "feedback": CriticFeedback(
-                    approved=False,
-                    consistency_score=0.7,
-                    quality_score=0.7,
-                    energy_score=0.7,
-                    continuity_score=0.7,
-                    issues=[],
-                    revision_suggestions=[],
-                    notes="",
-                ),
+                "timestamp": datetime.now().isoformat(),
+                "generation_params": {},
+                "critic_feedback": {
+                    "approved": False,
+                    "overall_score": 0.8,
+                    "prompt_alignment": 0.8,
+                    "director_compliance": 0.8,
+                    "continuity_score": 0.8,
+                    "technical_quality": 0.8,
+                    "issues": [],
+                    "suggestions": [],
+                    "better_than_previous": True,
+                    "evaluation_timestamp": datetime.now().isoformat(),
+                },
+                "approved": False,
             },
         ]
         
-        best = select_best_attempt(history, segment_index=0)
+        best_idx = select_best_attempt(segment)
         
-        # Should select attempt 2 with higher scores
-        assert best is not None
-        assert best["attempt_number"] == 2
+        # Should select attempt 2 (index 1) with higher overall_score
+        assert best_idx is not None
+        assert best_idx == 1
 
 
 class TestMusicProducerState:
@@ -234,8 +249,9 @@ class TestMusicProducerState:
         required_fields = [
             "user_prompt",
             "reference_paths",
-            "target_duration_sec",
-            "status",
+            "output_dir",
+            "phase",
+            "run_id",
         ]
         
         for field in required_fields:

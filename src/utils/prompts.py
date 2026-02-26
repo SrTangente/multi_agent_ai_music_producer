@@ -87,14 +87,14 @@ Your plans must be musically coherent and executable by an AI music generator.""
 
 def build_director_prompt(
     user_prompt: str,
-    musical_profile: MusicalProfile,
+    musical_profile: MusicalProfile | None,
     target_duration_sec: float | None = None,
 ) -> str:
     """Build the prompt for the Director Agent.
     
     Args:
         user_prompt: The user's original request.
-        musical_profile: Analysis results from Analysis Agent.
+        musical_profile: Analysis results from Analysis Agent (may be None).
         target_duration_sec: Optional target total duration.
         
     Returns:
@@ -103,6 +103,36 @@ def build_director_prompt(
     duration_guidance = ""
     if target_duration_sec:
         duration_guidance = f"\nTarget Duration: {target_duration_sec} seconds"
+    
+    # Handle case where no musical profile is available
+    if musical_profile is None:
+        return f"""Create a detailed track plan for the following request.
+
+User's Request: "{user_prompt}"
+{duration_guidance}
+
+Note: No reference tracks were provided. Please infer appropriate musical characteristics
+(BPM, key, mood, instrumentation) from the user's request.
+
+Instructions:
+1. Design an appropriate song structure (e.g., intro → verse → chorus → verse → chorus → outro)
+2. Assign duration to each segment (typically 8-16 seconds per segment)
+3. Plan mood and energy progression through the track
+4. Specify instrumentation hints for each segment
+5. Define transition approaches between segments
+
+Return a structured track plan with:
+- Total duration and segment count
+- For each segment:
+  - Type (intro/verse/chorus/bridge/breakdown/buildup/outro)
+  - Duration in seconds
+  - Mood description
+  - Energy level (low/medium/high/building/dropping)
+  - Instrumentation hints
+  - Transition descriptions (how to enter and exit)
+  - A detailed generation prompt for the music generator
+
+Ensure the plan aligns with the user's request."""
     
     return f"""Create a detailed track plan for the following request.
 

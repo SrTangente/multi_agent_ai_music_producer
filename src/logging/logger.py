@@ -123,6 +123,29 @@ class MusicProducerLogger:
             return f"[{agent}] {action}: {message}"
         return f"{action}: {message}"
     
+    def log_event(
+        self,
+        event_type: str,
+        node: str | None = None,
+        **kwargs,
+    ) -> LogEntry | None:
+        """Log a workflow event (convenience method).
+        
+        Args:
+            event_type: Type of event (e.g., 'node_start', 'node_end').
+            node: Node name if applicable.
+            **kwargs: Additional event data.
+            
+        Returns:
+            LogEntry if logged, None if filtered.
+        """
+        return self.info(
+            action=event_type,
+            message=f"Node: {node}" if node else event_type,
+            agent=node,
+            metadata=kwargs,
+        )
+    
     def info(
         self,
         action: str,

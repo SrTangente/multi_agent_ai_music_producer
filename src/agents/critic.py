@@ -197,10 +197,10 @@ Be objective and constructive. If issues are minor, still approve. Only reject i
             feedback = self._parse_feedback_from_response(content)
         except Exception as e:
             if self.logger:
-                self.logger.log_error(
-                    error_type="feedback_parse_error",
+                self.logger.error(
+                    action="feedback_parse_error",
                     message=str(e),
-                    agent_name=self.name,
+                    agent=self.name,
                 )
             # Default to approval with moderate scores
             feedback = CriticFeedback(

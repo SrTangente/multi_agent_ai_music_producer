@@ -98,7 +98,7 @@ Consider:
         return build_director_prompt(
             musical_profile=state.get("musical_profile"),
             user_prompt=state["user_prompt"],
-            target_duration=state.get("target_duration_sec", 120.0),
+            target_duration_sec=state.get("target_duration_sec", 120.0),
         )
     
     def _process_response(
@@ -113,10 +113,10 @@ Consider:
             plan = self._parse_plan_from_response(content, state)
         except Exception as e:
             if self.logger:
-                self.logger.log_error(
-                    error_type="plan_parse_error",
+                self.logger.error(
+                    action="plan_parse_error",
                     message=str(e),
-                    agent_name=self.name,
+                    agent=self.name,
                 )
             # Create default plan
             plan = self._create_default_plan(state)
@@ -192,7 +192,7 @@ Consider:
             durations[-1] += target_duration - total
         
         # Create prompts based on profile
-        profile = state.get("musical_profile", {})
+        profile = state.get("musical_profile") or {}  # Handle None explicitly
         base_prompt = state.get("user_prompt", "instrumental music")
         
         bpm = profile.get("bpm", 120)

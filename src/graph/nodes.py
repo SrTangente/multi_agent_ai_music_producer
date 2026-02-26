@@ -72,9 +72,10 @@ class AnalysisNode(NodeBase):
             State updates with musical_profile.
         """
         if self.logger:
-            self.logger.log_event(
-                event_type="node_start",
-                node="analysis",
+            self.logger.info(
+                action="node_start",
+                message="Node: analysis",
+                agent="analysis",
             )
         
         agent = AnalysisAgent(**self._get_agent_kwargs())
@@ -99,9 +100,10 @@ class DirectorNode(NodeBase):
             State updates with track_plan and segment_queue.
         """
         if self.logger:
-            self.logger.log_event(
-                event_type="node_start",
-                node="director",
+            self.logger.info(
+                action="node_start",
+                message="Node: director",
+                agent="director",
             )
         
         agent = DirectorAgent(**self._get_agent_kwargs())
@@ -148,10 +150,10 @@ class ProductionNode(NodeBase):
             State updates with current_segment.
         """
         if self.logger:
-            self.logger.log_event(
-                event_type="node_start",
-                node="production",
-                segment_index=state.get("current_segment_index", 0),
+            self.logger.info(
+                action="node_start",
+                message=f"Node: production (segment {state.get('current_segment_index', 0)})",
+                agent="production",
             )
         
         agent = ProductionAgent(
@@ -195,10 +197,10 @@ class CriticNode(NodeBase):
             State updates with critic_feedback on current_segment.
         """
         if self.logger:
-            self.logger.log_event(
-                event_type="node_start",
-                node="critic",
-                segment_index=state.get("current_segment_index", 0),
+            self.logger.info(
+                action="node_start",
+                message=f"Node: critic (segment {state.get('current_segment_index', 0)})",
+                agent="critic",
             )
         
         agent = CriticAgent(
@@ -244,9 +246,10 @@ class MasteringNode(NodeBase):
             State updates with final_output_path.
         """
         if self.logger:
-            self.logger.log_event(
-                event_type="node_start",
-                node="mastering",
+            self.logger.info(
+                action="node_start",
+                message="Node: mastering",
+                agent="mastering",
             )
         
         agent = MasteringAgent(
@@ -367,10 +370,9 @@ class RetrySegmentNode(NodeBase):
         
         if current_attempt >= self.max_retries:
             if self.logger:
-                self.logger.log_event(
-                    event_type="max_retries_reached",
-                    segment_index=current_index,
-                    attempts=current_attempt,
+                self.logger.warning(
+                    action="max_retries_reached",
+                    message=f"Max retries reached for segment {current_index} after {current_attempt} attempts",
                 )
             
             # Use best attempt and move on

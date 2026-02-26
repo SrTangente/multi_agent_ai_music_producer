@@ -1,5 +1,7 @@
 """Tests for audio tools."""
 
+from __future__ import annotations
+
 import pytest
 import numpy as np
 from pathlib import Path

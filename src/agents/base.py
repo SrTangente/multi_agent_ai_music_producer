@@ -161,6 +161,7 @@ class BaseAgent(ABC):
                 provider=self.config.provider,
                 model=self.config.model,
                 temperature=self.config.temperature,
+                max_tokens=self.config.max_tokens,
             )
         return self._llm
     
@@ -306,10 +307,10 @@ class BaseAgent(ABC):
         tools = self._get_tool_definitions()
         
         if self.logger:
-            self.logger.log_event(
-                event_type="agent_start",
-                agent_name=self.name,
-                has_tools=len(tools) > 0,
+            self.logger.info(
+                action="agent_start",
+                message=f"Starting agent with {len(tools)} tools",
+                agent=self.name,
             )
         
         # Track tool calls for context
@@ -342,10 +343,10 @@ class BaseAgent(ABC):
                 
             except Exception as e:
                 if self.logger:
-                    self.logger.log_error(
-                        error_type="llm_error",
+                    self.logger.error(
+                        action="llm_error",
                         message=str(e),
-                        agent_name=self.name,
+                        agent=self.name,
                     )
                 raise
             
@@ -370,10 +371,10 @@ class BaseAgent(ABC):
         updates = self._process_response(response, state)
         
         if self.logger:
-            self.logger.log_event(
-                event_type="agent_complete",
-                agent_name=self.name,
-                tool_calls_made=len(tool_history),
+            self.logger.info(
+                action="agent_complete",
+                message=f"Agent completed with {len(tool_history)} tool calls",
+                agent=self.name,
             )
         
         return updates

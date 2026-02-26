@@ -41,6 +41,14 @@ class ToolDefinition:
     parameters: dict[str, Any]  # JSON Schema for parameters
 
 
+@dataclass
+class ToolCall:
+    """A tool call from the LLM."""
+    id: str
+    name: str
+    arguments: dict[str, Any]
+
+
 class LLMProvider(ABC):
     """Abstract base class for LLM providers.
     

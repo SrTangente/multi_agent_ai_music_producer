@@ -292,13 +292,22 @@ class HuggingFaceProvider(LLMProvider):
         temp = temperature if temperature is not None else self._temperature
         max_new = max_tokens if max_tokens is not None else self._max_tokens
         
-        outputs = self._pipeline(
-            prompt,
-            max_new_tokens=max_new,
-            temperature=temp if temp > 0 else None,
-            do_sample=temp > 0,
-            return_full_text=False,
-        )
+        # Build generation kwargs for stability
+        gen_kwargs = {
+            "max_new_tokens": min(max_new, 1024),  # Cap to avoid exceeding model limits
+            "return_full_text": False,
+            "pad_token_id": self._tokenizer.eos_token_id,
+        }
+        
+        if temp > 0:
+            gen_kwargs["do_sample"] = True
+            gen_kwargs["temperature"] = temp
+            gen_kwargs["top_p"] = 0.9  # Nucleus sampling for stability
+            gen_kwargs["top_k"] = 50   # Limit vocabulary for stability
+        else:
+            gen_kwargs["do_sample"] = False
+        
+        outputs = self._pipeline(prompt, **gen_kwargs)
         
         response_text = outputs[0]["generated_text"]
         
