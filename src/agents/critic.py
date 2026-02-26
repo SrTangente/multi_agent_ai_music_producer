@@ -43,6 +43,7 @@ class CriticAgent(BaseAgent):
         provider: str = "anthropic",
         temperature: float = 0.3,
         approval_threshold: float = 0.7,
+        torch_dtype: str | None = None,
         **kwargs,
     ):
         """Initialize the Critic Agent.
@@ -52,6 +53,7 @@ class CriticAgent(BaseAgent):
             provider: LLM provider.
             temperature: LLM temperature (lower for consistent evaluation).
             approval_threshold: Minimum score to approve a segment.
+            torch_dtype: Dtype for HuggingFace models (e.g. 'bfloat16' for TPU).
             **kwargs: Additional BaseAgent arguments.
         """
         config = AgentConfig(
@@ -62,6 +64,7 @@ class CriticAgent(BaseAgent):
             temperature=temperature,
             max_tokens=2048,
             max_tool_calls=10,
+            torch_dtype=torch_dtype,
         )
         super().__init__(config=config, **kwargs)
         

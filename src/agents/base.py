@@ -55,6 +55,7 @@ class AgentConfig:
         max_tokens: Maximum response tokens.
         max_tool_calls: Maximum tool calls per turn.
         retry_on_tool_error: Whether to retry on tool failures.
+        torch_dtype: Dtype for HuggingFace models (e.g. 'bfloat16' for TPU).
     """
     name: str
     description: str
@@ -64,6 +65,7 @@ class AgentConfig:
     max_tokens: int = 4096
     max_tool_calls: int = 10
     retry_on_tool_error: bool = True
+    torch_dtype: str | None = None
 
 
 class BaseAgent(ABC):
@@ -157,11 +159,15 @@ class BaseAgent(ABC):
     def _get_llm(self) -> LLMProvider:
         """Get or create the LLM provider."""
         if self._llm is None:
+            kwargs = {}
+            if self.config.torch_dtype:
+                kwargs["torch_dtype"] = self.config.torch_dtype
             self._llm = create_llm_provider(
                 provider=self.config.provider,
                 model=self.config.model,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
+                **kwargs,
             )
         return self._llm
     

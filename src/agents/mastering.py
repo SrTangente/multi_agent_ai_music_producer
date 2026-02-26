@@ -40,6 +40,7 @@ class MasteringAgent(BaseAgent):
         temperature: float = 0.3,
         output_dir: str = "output",
         target_lufs: float = -14.0,
+        torch_dtype: str | None = None,
         **kwargs,
     ):
         """Initialize the Mastering Agent.
@@ -50,6 +51,7 @@ class MasteringAgent(BaseAgent):
             temperature: LLM temperature.
             output_dir: Directory for final output.
             target_lufs: Target loudness in LUFS.
+            torch_dtype: Dtype for HuggingFace models (e.g. 'bfloat16' for TPU).
             **kwargs: Additional BaseAgent arguments.
         """
         config = AgentConfig(
@@ -60,6 +62,7 @@ class MasteringAgent(BaseAgent):
             temperature=temperature,
             max_tokens=2048,
             max_tool_calls=10,
+            torch_dtype=torch_dtype,
         )
         super().__init__(config=config, **kwargs)
         

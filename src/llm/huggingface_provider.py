@@ -38,6 +38,7 @@ class HuggingFaceProvider(LLMProvider):
         device: str | None = None,
         load_in_8bit: bool = False,
         load_in_4bit: bool = False,
+        torch_dtype: str | None = None,
     ):
         """Initialize the HuggingFace provider.
         
@@ -49,6 +50,8 @@ class HuggingFaceProvider(LLMProvider):
             device: Device to use ('cuda', 'cpu', 'auto').
             load_in_8bit: Enable 8-bit quantization.
             load_in_4bit: Enable 4-bit quantization.
+            torch_dtype: Dtype for model weights ('float16', 'bfloat16', 'float32').
+                         Use 'bfloat16' for TPU.
         """
         try:
             import torch
@@ -81,6 +84,17 @@ class HuggingFaceProvider(LLMProvider):
             "token": token,
             "device_map": "auto" if device != "cpu" else None,
         }
+        
+        # Handle dtype (important for TPU - use bfloat16)
+        if torch_dtype:
+            import torch
+            dtype_map = {
+                "float16": torch.float16,
+                "bfloat16": torch.bfloat16,
+                "float32": torch.float32,
+            }
+            if torch_dtype in dtype_map:
+                model_kwargs["torch_dtype"] = dtype_map[torch_dtype]
         
         if load_in_8bit:
             model_kwargs["load_in_8bit"] = True

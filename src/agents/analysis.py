@@ -40,6 +40,7 @@ class AnalysisAgent(BaseAgent):
         model: str = "claude-sonnet-4-20250514",
         provider: str = "anthropic",
         temperature: float = 0.3,
+        torch_dtype: str | None = None,
         **kwargs,
     ):
         """Initialize the Analysis Agent.
@@ -48,6 +49,7 @@ class AnalysisAgent(BaseAgent):
             model: LLM model to use.
             provider: LLM provider.
             temperature: LLM temperature (lower for more consistent analysis).
+            torch_dtype: Dtype for HuggingFace models (e.g. 'bfloat16' for TPU).
             **kwargs: Additional BaseAgent arguments.
         """
         config = AgentConfig(
@@ -58,6 +60,7 @@ class AnalysisAgent(BaseAgent):
             temperature=temperature,
             max_tokens=2048,
             max_tool_calls=20,  # May need to analyze multiple tracks
+            torch_dtype=torch_dtype,
         )
         super().__init__(config=config, **kwargs)
     

@@ -34,6 +34,7 @@ class DirectorAgent(BaseAgent):
         model: str = "claude-sonnet-4-20250514",
         provider: str = "anthropic",
         temperature: float = 0.7,
+        torch_dtype: str | None = None,
         **kwargs,
     ):
         """Initialize the Director Agent.
@@ -42,6 +43,7 @@ class DirectorAgent(BaseAgent):
             model: LLM model to use.
             provider: LLM provider.
             temperature: LLM temperature.
+            torch_dtype: Dtype for HuggingFace models (e.g. 'bfloat16' for TPU).
             **kwargs: Additional BaseAgent arguments.
         """
         config = AgentConfig(
@@ -52,6 +54,7 @@ class DirectorAgent(BaseAgent):
             temperature=temperature,
             max_tokens=4096,
             max_tool_calls=0,  # Director doesn't use tools, just reasons
+            torch_dtype=torch_dtype,
         )
         super().__init__(config=config, **kwargs)
     

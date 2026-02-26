@@ -39,6 +39,7 @@ class ProductionAgent(BaseAgent):
         temperature: float = 0.5,
         output_dir: str = "output/segments",
         use_mock: bool = False,
+        torch_dtype: str | None = None,
         **kwargs,
     ):
         """Initialize the Production Agent.
@@ -49,8 +50,13 @@ class ProductionAgent(BaseAgent):
             temperature: LLM temperature.
             output_dir: Directory for generated segments.
             use_mock: Use mock generation (for testing without GPU).
+            torch_dtype: Dtype for HuggingFace models (e.g. 'bfloat16' for TPU).
             **kwargs: Additional BaseAgent arguments.
         """
+        # Set these before super().__init__() since _register_tools() needs them
+        self.output_dir = output_dir
+        self.use_mock = use_mock
+        
         config = AgentConfig(
             name="production",
             description="Generates audio segments using MusicGen",
@@ -59,11 +65,9 @@ class ProductionAgent(BaseAgent):
             temperature=temperature,
             max_tokens=2048,
             max_tool_calls=5,
+            torch_dtype=torch_dtype,
         )
         super().__init__(config=config, **kwargs)
-        
-        self.output_dir = output_dir
-        self.use_mock = use_mock
     
     def _register_tools(self) -> None:
         """Register audio generation tools."""
