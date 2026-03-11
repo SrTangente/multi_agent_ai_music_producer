@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "music-producer.fullname" . }}-config
+  labels:
+    {{- include "music-producer.labels" . | nindent 4 }}
+data:
+  # Logging
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  
+  # LLM Configuration
+  LLM_PROVIDER: {{ .Values.config.llm.provider | quote }}
+  LLM_MODEL: {{ .Values.config.llm.model | quote }}
+  LLM_TEMPERATURE: {{ .Values.config.llm.temperature | quote }}
+  LLM_MAX_TOKENS: {{ .Values.config.llm.maxTokens | quote }}
+  
+  # Audio Configuration
+  AUDIO_SAMPLE_RATE: {{ .Values.config.audio.sampleRate | quote }}
+  AUDIO_SEGMENT_DURATION: {{ .Values.config.audio.segmentDuration | quote }}
+  AUDIO_MODEL: {{ .Values.config.audio.model | quote }}
+  
+  # Redis Configuration
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ include "music-producer.fullname" . }}-redis-master
+  REDIS_PORT: "6379"
+  {{- end }}
+  
+  # Paths
+  OUTPUT_DIR: /app/output
+  REFERENCE_DIR: /app/references
+  MODEL_CACHE_DIR: /app/models

@@ -1,0 +1,86 @@
+{{- if .Values.monitoring.prometheusRules.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "music-producer.fullname" . }}
+  labels:
+    {{- include "music-producer.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.prometheusRules.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: music-producer.rules
+      rules:
+        # Alert: High error rate
+        - alert: MusicProducerHighErrorRate
+          expr: |
+            sum(rate(music_producer_requests_total{status="error"}[5m])) 
+            / 
+            sum(rate(music_producer_requests_total[5m])) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate in Music Producer API"
+            description: "Error rate is {{ "{{ $value | humanizePercentage }}" }} (threshold: 10%)"
+
+        # Alert: API pods down
+        - alert: MusicProducerDown
+          expr: |
+            absent(up{job="{{ include "music-producer.fullname" . }}"}) == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Music Producer is down"
+            description: "No Music Producer pods are running"
+
+        # Alert: High latency
+        - alert: MusicProducerHighLatency
+          expr: |
+            histogram_quantile(0.95, 
+              sum(rate(music_producer_request_duration_seconds_bucket[5m])) by (le)
+            ) > 10
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in Music Producer API"
+            description: "95th percentile latency is {{ "{{ $value | humanizeDuration }}" }}"
+
+        # Alert: GPU Job failures
+        - alert: MusicProducerJobFailures
+          expr: |
+            increase(music_producer_job_failures_total[1h]) > 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Multiple Music Producer job failures"
+            description: "{{ "{{ $value }}" }} jobs have failed in the last hour"
+
+        # Alert: Low memory
+        - alert: MusicProducerLowMemory
+          expr: |
+            container_memory_working_set_bytes{container="api"} 
+            / 
+            container_spec_memory_limit_bytes{container="api"} > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Music Producer API memory usage high"
+            description: "Memory usage is {{ "{{ $value | humanizePercentage }}" }}"
+
+        # Alert: Generation queue backing up
+        - alert: MusicProducerQueueBacklog
+          expr: |
+            music_producer_queue_length > 100
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Music generation queue backlog"
+            description: "{{ "{{ $value }}" }} jobs waiting in queue"
+{{- end }}

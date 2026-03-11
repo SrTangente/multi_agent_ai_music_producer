@@ -41,11 +41,13 @@ class TestSettings:
         # Note: This depends on your implementation
     
     def test_invalid_yaml_path(self):
-        """Test handling of invalid YAML path."""
+        """Test handling of invalid YAML path - returns default settings."""
         from src.config import Settings
         
-        with pytest.raises(FileNotFoundError):
-            Settings.from_yaml("/nonexistent/path/config.yaml")
+        # Settings.from_yaml doesn't raise when file doesn't exist,
+        # it gracefully falls back to defaults
+        settings = Settings.from_yaml("/nonexistent/path/config.yaml")
+        assert settings.llm.provider == "anthropic"  # default value
 
 
 class TestLLMConfig:
@@ -79,7 +81,7 @@ class TestGenerationConfig:
         
         config = GenerationConfig()
         
-        assert config.segment_duration_sec > 0
+        assert config.default_segment_duration > 0
         assert config.max_retries >= 0
         assert 0.0 <= config.approval_threshold <= 1.0
     

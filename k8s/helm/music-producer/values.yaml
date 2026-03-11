@@ -1,0 +1,327 @@
+# =============================================================================
+# Multi-Agent AI Music Producer - Helm Values
+# =============================================================================
+# This file contains all configurable values for the Helm chart.
+# Override these in your environment-specific values files.
+# =============================================================================
+
+# -- Global settings
+global:
+  # -- Image pull secrets for private registries
+  imagePullSecrets: []
+  # -- Storage class for persistent volumes
+  storageClass: ""
+
+# =============================================================================
+# API Server Configuration
+# =============================================================================
+api:
+  # -- Enable the API server deployment
+  enabled: true
+  
+  # -- Number of replicas (overridden by HPA if enabled)
+  replicaCount: 2
+  
+  image:
+    repository: ghcr.io/yourusername/music-producer
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  # -- Service configuration
+  service:
+    type: ClusterIP
+    port: 8000
+    annotations: {}
+  
+  # -- Resource limits and requests
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  
+  # -- Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  # -- Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  
+  # -- Node selector for API pods
+  nodeSelector: {}
+  
+  # -- Tolerations
+  tolerations: []
+  
+  # -- Affinity rules
+  affinity: {}
+  
+  # -- Additional environment variables
+  env: []
+  
+  # -- Liveness probe configuration
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  
+  # -- Readiness probe configuration
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# =============================================================================
+# GPU Worker Configuration (for music generation jobs)
+# =============================================================================
+worker:
+  # -- Enable GPU workers
+  enabled: true
+  
+  image:
+    repository: ghcr.io/yourusername/music-producer
+    tag: "latest-gpu"
+    pullPolicy: IfNotPresent
+  
+  # -- Resource limits for GPU workers
+  resources:
+    requests:
+      cpu: 2000m
+      memory: 8Gi
+      nvidia.com/gpu: 1
+    limits:
+      cpu: 4000m
+      memory: 16Gi
+      nvidia.com/gpu: 1
+  
+  # -- Node selector for GPU nodes
+  nodeSelector:
+    nvidia.com/gpu.present: "true"
+  
+  # -- Tolerations for GPU nodes
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  
+  # -- Affinity for GPU nodes
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: nvidia.com/gpu.product
+                operator: In
+                values:
+                  - NVIDIA-A100-SXM4-40GB
+                  - NVIDIA-A100-SXM4-80GB
+                  - NVIDIA-A10G
+                  - Tesla-T4
+  
+  # -- Priority class for GPU jobs
+  priorityClassName: gpu-workload
+
+# =============================================================================
+# Job Configuration (K8s Jobs for batch processing)
+# =============================================================================
+jobs:
+  # -- Default job settings
+  defaults:
+    # -- Job backoff limit before marking as failed
+    backoffLimit: 3
+    # -- TTL for completed jobs (seconds)
+    ttlSecondsAfterFinished: 3600
+    # -- Active deadline for job timeout (seconds)
+    activeDeadlineSeconds: 7200
+  
+  # -- Music generation job template
+  generation:
+    enabled: true
+    # -- Parallelism (concurrent pods)
+    parallelism: 1
+    # -- Completions required
+    completions: 1
+    resources:
+      requests:
+        cpu: 2000m
+        memory: 8Gi
+        nvidia.com/gpu: 1
+      limits:
+        cpu: 4000m
+        memory: 16Gi
+        nvidia.com/gpu: 1
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 100m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  hosts:
+    - host: music-producer.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: music-producer-tls
+      hosts:
+        - music-producer.example.com
+
+# =============================================================================
+# Persistence Configuration
+# =============================================================================
+persistence:
+  # -- Storage for generated audio files
+  output:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteMany
+    size: 50Gi
+    annotations: {}
+  
+  # -- Storage for reference audio files
+  references:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteMany
+    size: 20Gi
+    annotations: {}
+  
+  # -- Model cache storage
+  modelCache:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteMany
+    size: 100Gi
+    annotations: {}
+
+# =============================================================================
+# Configuration and Secrets
+# =============================================================================
+config:
+  # -- Log level
+  logLevel: INFO
+  # -- LLM provider configuration
+  llm:
+    provider: huggingface
+    model: Qwen/Qwen2.5-7B-Instruct
+    temperature: 0.7
+    maxTokens: 4096
+  # -- Audio generation settings
+  audio:
+    sampleRate: 32000
+    segmentDuration: 30
+    model: facebook/musicgen-medium
+
+secrets:
+  # -- Create secrets (set to false if using external secrets)
+  create: true
+  # -- HuggingFace token (required for gated models)
+  huggingfaceToken: ""
+  # -- Anthropic API key (if using Claude)
+  anthropicApiKey: ""
+  # -- OpenAI API key (if using OpenAI)
+  openaiApiKey: ""
+
+# =============================================================================
+# Redis Configuration (for job queue)
+# =============================================================================
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""
+  master:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    persistence:
+      enabled: true
+      size: 8Gi
+
+# =============================================================================
+# Monitoring Configuration
+# =============================================================================
+monitoring:
+  # -- Enable Prometheus ServiceMonitor
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    additionalLabels:
+      release: prometheus
+  
+  # -- Enable Grafana dashboard ConfigMap
+  grafanaDashboard:
+    enabled: true
+    labels:
+      grafana_dashboard: "1"
+  
+  # -- Prometheus rules for alerting
+  prometheusRules:
+    enabled: true
+    additionalLabels:
+      release: prometheus
+
+# =============================================================================
+# Service Account
+# =============================================================================
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# =============================================================================
+# Pod Security
+# =============================================================================
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# =============================================================================
+# Network Policies
+# =============================================================================
+networkPolicy:
+  enabled: true
+  # -- Allow ingress from these namespaces
+  allowedNamespaces:
+    - ingress-nginx
+    - monitoring

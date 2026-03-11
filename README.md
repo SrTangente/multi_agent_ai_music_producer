@@ -245,6 +245,171 @@ mypy src
 ruff check src
 ```
 
+## Kubernetes Deployment
+
+This project includes a production-grade Helm chart for deploying to Kubernetes with GPU support for music generation.
+
+### Architecture Overview
+
+```
+                                    ┌─────────────────┐
+                                    │   Ingress       │
+                                    │   (TLS/HTTPS)   │
+                                    └────────┬────────┘
+                                             │
+                                             ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                         Kubernetes Cluster                            │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐   │
+│  │   API Server    │    │   API Server    │    │   API Server    │   │
+│  │   (HPA: 2-10)   │    │   (Replica)     │    │   (Replica)     │   │
+│  └────────┬────────┘    └────────┬────────┘    └────────┬────────┘   │
+│           │                      │                      │            │
+│           └──────────────────────┼──────────────────────┘            │
+│                                  │                                   │
+│                                  ▼                                   │
+│                         ┌─────────────────┐                          │
+│                         │     Redis       │                          │
+│                         │   (Job Queue)   │                          │
+│                         └────────┬────────┘                          │
+│                                  │                                   │
+│           ┌──────────────────────┼──────────────────────┐            │
+│           │                      │                      │            │
+│           ▼                      ▼                      ▼            │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐   │
+│  │  GPU Job (A100) │    │  GPU Job (A100) │    │  GPU Job (T4)   │   │
+│  │  Music Gen      │    │  Music Gen      │    │  Music Gen      │   │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘   │
+│                                                                       │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │                    Persistent Volumes                          │  │
+│  │  ┌──────────┐      ┌──────────┐      ┌──────────┐             │  │
+│  │  │  Output  │      │References│      │Model Cache│             │  │
+│  │  │  (50Gi)  │      │  (20Gi)  │      │  (100Gi)  │             │  │
+│  │  └──────────┘      └──────────┘      └──────────┘             │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+        ┌─────────────────────────────────────────────────┐
+        │              Monitoring Stack                    │
+        │  ┌──────────────┐      ┌──────────────┐         │
+        │  │  Prometheus  │─────▶│   Grafana    │         │
+        │  │  (metrics)   │      │  (dashboard) │         │
+        │  └──────────────┘      └──────────────┘         │
+        └─────────────────────────────────────────────────┘
+```
+
+### Key Features
+
+- **Helm Chart**: Full production-ready chart with customizable values
+- **GPU Scheduling**: Node affinity, tolerations, and priority classes for GPU Jobs
+- **HPA**: Automatic scaling based on CPU/memory utilization
+- **TLS Ingress**: cert-manager integration with Let's Encrypt
+- **Observability**: Prometheus ServiceMonitor + Grafana dashboard
+- **Security**: NetworkPolicy, PodSecurityContext, non-root containers
+
+### Quick Start
+
+```bash
+# Add Helm dependencies
+cd k8s/helm/music-producer
+helm dependency update
+
+# Install in staging
+helm install music-producer . \
+  -f values-staging.yaml \
+  --namespace music-producer \
+  --create-namespace \
+  --set secrets.huggingfaceToken=$HF_TOKEN
+
+# Install in production
+helm install music-producer . \
+  -f values-production.yaml \
+  --namespace music-producer \
+  --create-namespace \
+  --set secrets.huggingfaceToken=$HF_TOKEN \
+  --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY
+```
+
+### Building Docker Images
+
+```bash
+# Build CPU image
+docker build --target runtime-cpu -t music-producer:latest .
+
+# Build GPU image
+docker build --target runtime-gpu -t music-producer:latest-gpu .
+
+# Build job runner
+docker build --target job-runner -t music-producer:job-runner .
+
+# Push to registry
+docker tag music-producer:latest ghcr.io/yourusername/music-producer:latest
+docker push ghcr.io/yourusername/music-producer:latest
+```
+
+### Spawning GPU Jobs
+
+The job template can be used to spawn music generation jobs:
+
+```bash
+# Create a generation job
+helm template music-producer . \
+  --set jobConfig.jobId="gen-$(uuidgen)" \
+  --set jobConfig.prompt="Create a chill lofi beat" \
+  --set jobConfig.duration=120 \
+  -s templates/job.yaml | kubectl apply -f -
+
+# Watch job progress
+kubectl get jobs -w
+
+# Check logs
+kubectl logs job/music-producer-generation-<job-id>
+```
+
+### Environment-Specific Values
+
+| File | Use Case |
+|------|----------|
+| `values.yaml` | Default values |
+| `values-staging.yaml` | Staging (reduced resources, T4 GPUs) |
+| `values-production.yaml` | Production (full resources, A100 GPUs) |
+
+### Monitoring
+
+The chart includes:
+
+1. **ServiceMonitor**: Auto-discovered by Prometheus Operator
+2. **PrometheusRule**: Alerting rules for error rate, latency, job failures
+3. **Grafana Dashboard**: Auto-provisioned dashboard with key metrics
+
+Access Grafana and look for the "Music Producer Dashboard".
+
+### Resource Requirements
+
+| Component | CPU Request | Memory Request | GPU |
+|-----------|-------------|----------------|-----|
+| API Server | 500m | 1Gi | - |
+| GPU Worker | 2000m | 8Gi | 1x (T4/A100) |
+| Redis | 100m | 128Mi | - |
+
+### Troubleshooting
+
+```bash
+# Check pod status
+kubectl get pods -n music-producer
+
+# View API logs
+kubectl logs -f deployment/music-producer-api -n music-producer
+
+# Check GPU node availability
+kubectl get nodes -l nvidia.com/gpu.present=true
+
+# Debug job failures
+kubectl describe job/music-producer-generation-<id> -n music-producer
+```
+
 ## License
 
 MIT

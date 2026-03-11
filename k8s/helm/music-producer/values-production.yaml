@@ -1,0 +1,94 @@
+# Production environment values
+# Override defaults for production deployment
+
+api:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+
+worker:
+  resources:
+    requests:
+      cpu: 4000m
+      memory: 16Gi
+      nvidia.com/gpu: 1
+    limits:
+      cpu: 8000m
+      memory: 32Gi
+      nvidia.com/gpu: 1
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 500m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+  hosts:
+    - host: music-producer.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: music-producer-tls-prod
+      hosts:
+        - music-producer.yourcompany.com
+
+persistence:
+  output:
+    enabled: true
+    storageClass: gp3
+    size: 200Gi
+  references:
+    enabled: true
+    storageClass: gp3
+    size: 100Gi
+  modelCache:
+    enabled: true
+    storageClass: gp3
+    size: 200Gi
+
+redis:
+  enabled: true
+  architecture: replication
+  auth:
+    enabled: true
+  master:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+    persistence:
+      size: 20Gi
+  replica:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+  grafanaDashboard:
+    enabled: true
+  prometheusRules:
+    enabled: true
+
+config:
+  logLevel: INFO

@@ -94,7 +94,7 @@ llm:
   max_tokens: 4096
 
 generation:
-  segment_duration_sec: 15.0
+  default_segment_duration: 15.0
   max_retries: 2
   approval_threshold: 0.6
 
@@ -104,9 +104,8 @@ audio:
   target_lufs: -14.0
 
 logging:
-  level: standard
-  log_dir: logs
-  enable_json: false
+  level: STANDARD
+  output_dir: logs
 """
     path = temp_dir / "config.yaml"
     path.write_text(config_content)
@@ -270,6 +269,38 @@ def silent_progress():
     """Create a silent progress callback."""
     from src.logging.progress import SilentProgressCallback
     return SilentProgressCallback()
+
+
+# ============================================================================
+# Workflow Test Fixtures
+# ============================================================================
+
+@pytest.fixture
+def initial_state(sample_initial_state) -> dict[str, Any]:
+    """Alias for sample_initial_state for backward compatibility."""
+    return sample_initial_state
+
+
+@pytest.fixture
+def state_with_plan(sample_initial_state, sample_track_plan) -> dict[str, Any]:
+    """Create a state with a populated track plan."""
+    state = dict(sample_initial_state)
+    state["track_plan"] = sample_track_plan
+    state["current_segment_index"] = 0
+    state["segments"] = []
+    # Populate segment_queue based on track plan (TrackPlan is a TypedDict)
+    state["segment_queue"] = [
+        {"index": i, "prompt": sample_track_plan["segment_prompts"][i]}
+        for i in range(sample_track_plan["segment_count"])
+    ]
+    return state
+
+
+@pytest.fixture
+def mock_settings():
+    """Create mock settings for workflow tests."""
+    from src.config import Settings
+    return Settings()
 
 
 # ============================================================================

@@ -1,0 +1,31 @@
+apiVersion: v2
+name: music-producer
+description: Multi-Agent AI Music Producer - Kubernetes Helm Chart
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - ai
+  - music
+  - langgraph
+  - gpu
+  - machine-learning
+
+home: https://github.com/yourusername/multi_agent_ai_music_producer
+sources:
+  - https://github.com/yourusername/multi_agent_ai_music_producer
+
+maintainers:
+  - name: Jose Juan
+    email: your-email@example.com
+
+dependencies:
+  - name: redis
+    version: "18.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: prometheus
+    version: "25.x.x"
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled

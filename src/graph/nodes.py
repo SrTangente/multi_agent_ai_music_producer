@@ -390,13 +390,18 @@ class RetrySegmentNode(NodeBase):
                 "status": "producing",
             }
         else:
-            # Prepare for retry
+            # Prepare for retry - create new segment with updated attempt info
+            segment_queue = state.get("segment_queue", [])
+            segment_params = segment_queue[current_index] if current_index < len(segment_queue) else {}
+            
             return {
                 "attempt_history": attempt_history,
-                "current_segment": create_segment_state(
-                    segment_index=current_index,
-                    attempt_number=current_attempt + 1,
-                ),
+                "current_segment": {
+                    "segment_index": current_index,
+                    "attempt_number": current_attempt + 1,
+                    "status": "pending",
+                    "parameters": segment_params,
+                },
                 "status": "producing",
             }
 

@@ -1,0 +1,88 @@
+# Staging environment values
+# Reduced resources for cost optimization
+
+api:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+
+worker:
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+      nvidia.com/gpu: 1
+    limits:
+      cpu: 2000m
+      memory: 8Gi
+      nvidia.com/gpu: 1
+  # Use cheaper GPU types in staging
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: nvidia.com/gpu.product
+                operator: In
+                values:
+                  - Tesla-T4
+                  - NVIDIA-L4
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  hosts:
+    - host: music-producer-staging.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: music-producer-tls-staging
+      hosts:
+        - music-producer-staging.yourcompany.com
+
+persistence:
+  output:
+    enabled: true
+    size: 20Gi
+  references:
+    enabled: true
+    size: 10Gi
+  modelCache:
+    enabled: true
+    size: 50Gi
+
+redis:
+  enabled: true
+  architecture: standalone
+  master:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    persistence:
+      size: 5Gi
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+  grafanaDashboard:
+    enabled: true
+  prometheusRules:
+    enabled: false  # Reduce noise in staging
+
+config:
+  logLevel: DEBUG

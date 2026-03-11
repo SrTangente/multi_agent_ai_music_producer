@@ -1,0 +1,89 @@
+{{- if .Values.persistence.output.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "music-producer.fullname" . }}-output
+  labels:
+    {{- include "music-producer.labels" . | nindent 4 }}
+    storage-type: output
+  {{- with .Values.persistence.output.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.output.accessMode }}
+  {{- if .Values.persistence.output.storageClass }}
+  {{- if (eq "-" .Values.persistence.output.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.persistence.output.storageClass | quote }}
+  {{- end }}
+  {{- else if .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.output.size }}
+{{- end }}
+
+{{- if .Values.persistence.references.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "music-producer.fullname" . }}-references
+  labels:
+    {{- include "music-producer.labels" . | nindent 4 }}
+    storage-type: references
+  {{- with .Values.persistence.references.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.references.accessMode }}
+  {{- if .Values.persistence.references.storageClass }}
+  {{- if (eq "-" .Values.persistence.references.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.persistence.references.storageClass | quote }}
+  {{- end }}
+  {{- else if .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.references.size }}
+{{- end }}
+
+{{- if .Values.persistence.modelCache.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "music-producer.fullname" . }}-model-cache
+  labels:
+    {{- include "music-producer.labels" . | nindent 4 }}
+    storage-type: model-cache
+  {{- with .Values.persistence.modelCache.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.modelCache.accessMode }}
+  {{- if .Values.persistence.modelCache.storageClass }}
+  {{- if (eq "-" .Values.persistence.modelCache.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.persistence.modelCache.storageClass | quote }}
+  {{- end }}
+  {{- else if .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.modelCache.size }}
+{{- end }}

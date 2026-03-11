@@ -1,0 +1,14 @@
+# Patterns to ignore when building packages.
+.git
+.gitignore
+.dockerignore
+*.md
+*.txt
+tests/
+.github/
+.vscode/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
